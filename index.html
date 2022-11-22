@@ -62,133 +62,144 @@
         camera.position.set(0, 0, 70);
         camera.lookAt( scene.position );
 
-        let axesHelper = new THREE.AxesHelper( 100 );
-        scene.add( axesHelper );
+        //let axesHelper = new THREE.AxesHelper( 100 );
+        //scene.add( axesHelper );
 
         //fények
-        let amb=new THREE.AmbientLight(0xffffff, 0.5);
-        scene.add(amb);
+            let amb=new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(amb);
 
-        let sunLight=new THREE.PointLight(0xfffeff, 1);
-
-
+            let sunLight=new THREE.PointLight(0xfffeff, 1);
 
         //textúrák
-        let textureLoader=new THREE.TextureLoader();
-        let planetTexture=textureLoader.load('textures/planet.png');
-        let deathstarTexture=textureLoader.load('textures/deathstar.png');
-        let tiefighterTexture=textureLoader.load('textures/tiefighter.png');
-        let moonTexture=textureLoader.load('textures/moon.png');
+            let textureLoader=new THREE.TextureLoader();
+            let planetTexture=textureLoader.load('textures/planet.png');
+            let deathstarTexture=textureLoader.load('textures/deathstar.png');
+            let tiefighterTexture=textureLoader.load('textures/tiefighter.png');
+            let moonTexture=textureLoader.load('textures/moon.png');
 
         // Objektumok létrehozása
-        planetMoon=new THREE.Group();
-        scene.add(planetMoon);
+            planetMoon=new THREE.Group();
+            scene.add(planetMoon);
 
         //planet
-        planetRadius=20;
-        let planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
-        let planetMat=new THREE.MeshPhongMaterial();
-        planetMat.map=planetTexture;
-        planet=new THREE.Mesh(planetgeo, planetMat);
-        planetMoon.add(planet);
+            planetRadius=20;
+            let planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
+            let planetMat=new THREE.MeshPhongMaterial();
+            planetMat.map=planetTexture;
+            planet=new THREE.Mesh(planetgeo, planetMat);
+            planetMoon.add(planet);
 
         //moon
-        planetMoonRatio=0.1;
-        let moonMat=new THREE.MeshPhongMaterial();
-        moonMat.map=moonTexture;
-        moon=new THREE.Mesh(planetgeo, moonMat);
-        moon.position.set(planetRadius*2,0,0);
-        moon.scale.set(planetMoonRatio, planetMoonRatio, planetMoonRatio);
-        planetMoon.add(moon);
+            planetMoonRatio=0.1;
+            let moonMat=new THREE.MeshPhongMaterial();
+            moonMat.map=moonTexture;
+            moon=new THREE.Mesh(planetgeo, moonMat);
+            moon.position.set(planetRadius*2,0,0);
+            moon.scale.set(planetMoonRatio, planetMoonRatio, planetMoonRatio);
+            planetMoon.add(moon);
 
-        holder1=new THREE.Object3D();
-        holder1.add(moon);
-        planetMoon.add(holder1);
-        planetMoon.position.x=-20;
+            holder1=new THREE.Object3D();
+            holder1.add(moon);
+            planetMoon.add(holder1);
+            planetMoon.position.x=-20;
 
         //nap fényforrásnak
-        let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
-        let sun=new THREE.Mesh(planetgeo, sunMat);
-        sun.scale.set(5, 5, 5);
-        sun.position.set(0, 0, 1000);
-        sun.add(sunLight);
-        scene.add(sun);
+            let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
+            let sun=new THREE.Mesh(planetgeo, sunMat);
+            sun.scale.set(5, 5, 5);
+            sun.position.set(0, 0, 1000);
+            sun.add(sunLight);
+            scene.add(sun);
 
         //tiefighter
-        tiefighter1=new THREE.Group();
-        scene.add(tiefighter1);
-        tiefighter1.position.set(0, 0, -50);
-        //wing
-        let wingVertices=[];
-        wingVertices.push(
-            -2.5, 0.0, 0.0, //0
-            2.5, 0.0, 0.0,  //1
-            -4.5, 5.5, 0.0, //2
-            4.5, 5.5, 0.0,  //3
-            0.0, 5.5, 0.0,  //4
-            -2.5, 11.0, 0.0, //5
-            2.5, 11.0, 0.0,  //6
+            tiefighter1=new THREE.Group();
+            scene.add(tiefighter1);
+            tiefighter1.position.set(0, 0, -50);
+            //wing
+            let wingVertices=[];
+            wingVertices.push(
+                -2.5, 0.0, 0.0, //0
+                2.5, 0.0, 0.0,  //1
+                -4.5, 5.5, 0.0, //2
+                4.5, 5.5, 0.0,  //3
+                0.0, 5.5, 0.0,  //4
+                -2.5, 11.0, 0.0, //5
+                2.5, 11.0, 0.0,  //6
 
-             -2.5, 0.0, 0.2, //7
-              2.5, 0.0, 0.2,  //8
-             -4.5, 5.5, 0.2, //9
-              4.5, 5.5, 0.2,  //10
-              0.0, 5.5, 0.2,  //11
-            -2.5, 11.0, 0.2, //12
-             2.5, 11.0, 0.2,  //13
+                 -2.5, 0.0, 0.2, //7
+                  2.5, 0.0, 0.2,  //8
+                 -4.5, 5.5, 0.2, //9
+                  4.5, 5.5, 0.2,  //10
+                  0.0, 5.5, 0.2,  //11
+                -2.5, 11.0, 0.2, //12
+                 2.5, 11.0, 0.2,  //13
 
-        )
+            )
 
-        let wingIndices=[];
-        wingIndices.push(
-            0, 1, 4,
-            1, 3, 4,
-            3, 6, 4,
-            6, 5, 4,
-            5, 2, 4,
-            2, 0, 4,
+            let wingIndices=[];
+            wingIndices.push(
+                0, 1, 4,
+                1, 3, 4,
+                3, 6, 4,
+                6, 5, 4,
+                5, 2, 4,
+                2, 0, 4,
 
-            7, 8, 11,
-            8, 10, 11,
-            10, 13, 11,
-            13, 12, 11,
-            12, 9, 11,
-            9, 7, 11,
+                7, 8, 11,
+                8, 10, 11,
+                10, 13, 11,
+                13, 12, 11,
+                12, 9, 11,
+                9, 7, 11,
 
-            5, 6, 13,
-            13, 12, 5,
+                5, 6, 13,
+                13, 12, 5,
 
-            0, 7, 8,
-            8, 1, 0,
+                0, 7, 8,
+                8, 1, 0,
 
-            5, 12, 9,
-            5, 9, 2,
+                5, 12, 9,
+                5, 9, 2,
 
-            6, 10, 13,
-            6, 3, 10,
+                6, 10, 13,
+                6, 3, 10,
 
-            2, 9, 7,
-            2, 7, 0,
+                2, 9, 7,
+                2, 7, 0,
 
-            10, 1, 3,
-            10, 8, 1
-        )
+                10, 1, 3,
+                10, 8, 1
+            )
 
-        let wingGeo=new THREE.BufferGeometry();
-        wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
-        wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
-        wingGeo.computeVertexNormals();
-        let wingMat=new THREE.MeshLambertMaterial({color: 0x101010, side:THREE.DoubleSide});
-        let wingFrameMat=new THREE.MeshLambertMaterial({color: 0xa0a0a0, wireframe:true});
-        let wingR=new THREE.Mesh(wingGeo, wingMat);
-        let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
-        let wingL=new THREE.Mesh(wingGeo, wingMat);
-        let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
-        wingR.position.set(0, 0, 0);
-        wingL.position.set(0, 0, 7);
-        wingR.add(wingRFrame);
-        wingL.add(wingLFrame);
-        tiefighter1.add(wingR, wingL);
+            let wingGeo=new THREE.BufferGeometry();
+            wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
+            wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
+            wingGeo.computeVertexNormals();
+            let wingMat=new THREE.MeshLambertMaterial({color: 0x101010, side:THREE.DoubleSide});
+            let wingFrameMat=new THREE.MeshLambertMaterial({color: 0xa0a0a0, wireframe:true});
+            let wingR=new THREE.Mesh(wingGeo, wingMat);
+            let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+            let wingL=new THREE.Mesh(wingGeo, wingMat);
+            let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+            wingR.position.set(0, -5.5, -4);
+            wingL.position.set(0, -5.5, 4);
+            wingR.add(wingRFrame);
+            wingL.add(wingLFrame);
+            tiefighter1.add(wingR, wingL);
+
+            //cabin
+            let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
+            let cabin=new THREE.Mesh(cabinGeo, wingMat);
+            tiefighter1.add(cabin);
+
+            //axel
+            let axelGeo=new THREE.CylinderGeometry(0.7, 0.7, 8, 20, 1);
+            let axel=new THREE.Mesh(axelGeo, wingMat);
+            axel.rotation.z=Math.PI/2;
+            axel.rotation.y=Math.PI/2;
+            tiefighter1.add(axel);
+
 
 
 
