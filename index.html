@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="hu">
+
+<head>
+    <meta charset=utf-8>
+    <title>Space</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        canvas { width: 100%; height: 100% }
+    </style>
+</head>
+
+<body>
+
+<script type="importmap">
+{
+    "imports": {
+        "three": "./js-r143/build/three.module.js",
+        "trackballcontrols": "./js-r143/examples/jsm/controls/TrackballControls.js"
+    }
+}
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { TrackballControls } from 'trackballcontrols';
+
+    // Globális változók
+    let WIDTH, HEIGHT, aspectRatio;
+    let renderer;
+    let scene, camera;
+    let controls;
+    let planet, stardestroyer, deathstar, tiefighter1, tiefighter2, stars, moon, planetMoon;
+    let planetRadius, planetMoonRatio;
+    let holder1;
+
+
+    init();
+    // Egy képkocka rajzolása
+    // render();
+    // Animáció indítása
+    animate();
+
+    function init() {
+        // Böngésző ablakméret lekérése és méretarány számítása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        // Renderer létrehozása és DOM-hoz adása
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.shadowMap.enabled=true;
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000 );
+        document.body.appendChild( renderer.domElement );
+
+        // Színtér létrehozása
+        scene = new THREE.Scene();
+
+        // Kamera létrehozása és vetítési paramétereinek beállítása
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.set(0, 0, 70);
+        camera.lookAt( scene.position );
+
+        let axesHelper = new THREE.AxesHelper( 100 );
+        scene.add( axesHelper );
+
+        //fények
+        let amb=new THREE.AmbientLight(0xffffff, 0.5);
+        scene.add(amb);
+
+        let sunLight=new THREE.PointLight(0xfffeff, 1);
+
+
+
+        //textúrák
+        let textureLoader=new THREE.TextureLoader();
+        let planetTexture=textureLoader.load('textures/planet.png');
+        let deathstarTexture=textureLoader.load('textures/deathstar.png');
+        let tiefighterTexture=textureLoader.load('textures/tiefighter.png');
+        let moonTexture=textureLoader.load('textures/moon.png');
+
+        // Objektumok létrehozása
+        planetMoon=new THREE.Group();
+        scene.add(planetMoon);
+
+        //planet
+        planetRadius=20;
+        let planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
+        let planetMat=new THREE.MeshPhongMaterial();
+        planetMat.map=planetTexture;
+        planet=new THREE.Mesh(planetgeo, planetMat);
+        planetMoon.add(planet);
+
+        //moon
+        planetMoonRatio=0.1;
+        let moonMat=new THREE.MeshPhongMaterial();
+        moonMat.map=moonTexture;
+        moon=new THREE.Mesh(planetgeo, moonMat);
+        moon.position.set(planetRadius*2,0,0);
+        moon.scale.set(planetMoonRatio, planetMoonRatio, planetMoonRatio);
+        planetMoon.add(moon);
+
+        holder1=new THREE.Object3D();
+        holder1.add(moon);
+        planetMoon.add(holder1);
+        planetMoon.position.x=-20;
+
+        //nap fényforrásnak
+        let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
+        let sun=new THREE.Mesh(planetgeo, sunMat);
+        sun.scale.set(5, 5, 5);
+        sun.position.set(0, 0, 1000);
+        sun.add(sunLight);
+        scene.add(sun);
+
+        //tiefighter
+        tiefighter1=new THREE.Group();
+        scene.add(tiefighter1);
+        tiefighter1.position.set(0, 0, -50);
+        //wing
+        let wingVertices=[];
+        wingVertices.push(
+            -2.5, 0.0, 0.0, //0
+            2.5, 0.0, 0.0,  //1
+            -4.5, 5.5, 0.0, //2
+            4.5, 5.5, 0.0,  //3
+            0.0, 5.5, 0.0,  //4
+            -2.5, 11.0, 0.0, //5
+            2.5, 11.0, 0.0,  //6
+
+             -2.5, 0.0, 0.2, //7
+              2.5, 0.0, 0.2,  //8
+             -4.5, 5.5, 0.2, //9
+              4.5, 5.5, 0.2,  //10
+              0.0, 5.5, 0.2,  //11
+            -2.5, 11.0, 0.2, //12
+             2.5, 11.0, 0.2,  //13
+
+        )
+
+        let wingIndices=[];
+        wingIndices.push(
+            0, 1, 4,
+            1, 3, 4,
+            3, 6, 4,
+            6, 5, 4,
+            5, 2, 4,
+            2, 0, 4,
+
+            7, 8, 11,
+            8, 10, 11,
+            10, 13, 11,
+            13, 12, 11,
+            12, 9, 11,
+            9, 7, 11,
+
+            5, 6, 13,
+            13, 12, 5,
+
+            0, 7, 8,
+            8, 1, 0,
+
+            5, 12, 9,
+            5, 9, 2,
+
+            6, 10, 13,
+            6, 3, 10,
+
+            2, 9, 7,
+            2, 7, 0,
+
+            10, 1, 3,
+            10, 8, 1
+        )
+
+        let wingGeo=new THREE.BufferGeometry();
+        wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
+        wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
+        wingGeo.computeVertexNormals();
+        let wingMat=new THREE.MeshLambertMaterial({color: 0x101010, side:THREE.DoubleSide});
+        let wingFrameMat=new THREE.MeshLambertMaterial({color: 0xa0a0a0, wireframe:true});
+        let wingR=new THREE.Mesh(wingGeo, wingMat);
+        let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+        let wingL=new THREE.Mesh(wingGeo, wingMat);
+        let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+        wingR.position.set(0, 0, 0);
+        wingL.position.set(0, 0, 7);
+        wingR.add(wingRFrame);
+        wingL.add(wingLFrame);
+        tiefighter1.add(wingR, wingL);
+
+
+
+        //csillagok
+        let vertices=new Float32Array(10000*3);
+        for(let inc=0, axes=0; inc<10000; inc++, axes+=3){
+            vertices[axes]=Math.random()*5000-2000;
+            vertices[axes+1]=Math.random()*5000-2000;
+            vertices[axes+2]=Math.random()*5000-2000;
+        }
+        let starsGeometry=new THREE.BufferGeometry();
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        let starsMaterial=new THREE.PointsMaterial({size:2, color: 0xffffff, sizeAttenuation: true});
+        stars=new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+
+
+
+
+        // Az ablak későbbi átméretezése esetén visszahívható függvény megadása
+        window.addEventListener( 'resize', handleWindowResize, false );
+
+        // Kamera vezérlés
+        controls = new TrackballControls( camera, renderer.domElement );
+        controls.rotateSpeed = 5.0;
+        controls.panSpeed = 1.0;
+    }
+
+    function handleWindowResize() {
+        // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        console.log( 'WIDTH=' + WIDTH + '; HEIGHT=' + HEIGHT );
+        renderer.setSize( WIDTH, HEIGHT );
+        aspectRatio = WIDTH / HEIGHT;
+        camera.aspect = aspectRatio;
+        camera.updateProjectionMatrix();
+
+        render();
+    }
+
+    function animate() {
+        // Újabb képkocka rajzolásának kérése.
+        // Maximálisan 60 FPS-t biztosít a rendszer.
+        requestAnimationFrame( animate );
+        //hold keringés
+        holder1.rotation.y+=0.005;
+        // Kameramozgás vezérlése
+        controls.update();
+        // Új képkocka rajzolása
+        render();
+    }
+
+    function render() {
+        // 3D -> 2D vetített kép kiszámítása.
+        // scene 3D színtér képe a camera kamera szemszögéből.
+        renderer.render( scene, camera );
+    }
+
+</script>
+</body>
+</html>
