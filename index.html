@@ -25,7 +25,7 @@
     import * as THREE from 'three';
     import { TrackballControls } from 'trackballcontrols';
     import { GUI } from "./js-r143/examples/jsm/libs/lil-gui.module.min.js";
-    import { KeyControl } from "./js-r143/examples/jsm/controls/FirstPersonControls.js"
+    //import { KeyControl } from "./js-r143/examples/jsm/controls/FirstPersonControls.js"
 
     // Globális változók
     let WIDTH, HEIGHT, aspectRatio;
@@ -34,7 +34,8 @@
     let controls;
     let planet, stardestroyer, deathstar, tiefighter1, tiefighter2, stars, moon, planetMoon;
     let planetRadius, planetMoonRatio;
-    let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers, angle=0, direction=1, distance=0;
+    let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
+        angle=0, direction=1, distance=0, laserLightR, laserLightL;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
@@ -89,8 +90,11 @@
         //fények
             let amb=new THREE.AmbientLight(0xffffff, 1);
             scene.add(amb);
-
             sunLight=new THREE.PointLight(0xfffeff, 1);
+            laserLightR=new THREE.SpotLight(0x00ff00, 1);
+            laserLightL=new THREE.SpotLight(0x00ff00, 1);
+            laserLightR.angle=Math.PI/20;
+            laserLightL.angle=Math.PI/20;
 
         //textúrák
             let textureLoader=new THREE.TextureLoader();
@@ -239,13 +243,21 @@
             tflaserR.scale.set(0.8, 2, 1);
             tflaserL.scale.set(0.8, 2, 1);
 
-
             tfgunsystem=new THREE.Object3D();
             tflasers=new THREE.Object3D();
             tfgunsystem.add(tfgunR, tfgunL);
             cabin.add(tfgunsystem);
 
+            //light target
+            //let tempGeo=new THREE.BoxGeometry(1, 10, 10);
+            //let tempMat=new THREE.MeshPhongMaterial({color: 0x000000});
+            //let temp=new THREE.Mesh(tempGeo, tempMat);
+            //temp.position.x=-10;
+            //tfgunsystem.add(temp);
 
+            //laser light
+            tflaserR.add(laserLightR);
+            tflaserL.add(laserLightL);
 
 
         //csillagok
