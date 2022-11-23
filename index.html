@@ -25,6 +25,7 @@
     import * as THREE from 'three';
     import { TrackballControls } from 'trackballcontrols';
     import { GUI } from "./js-r143/examples/jsm/libs/lil-gui.module.min.js";
+    import { KeyControl } from "./js-r143/examples/jsm/controls/FirstPersonControls.js"
 
     // Globális változók
     let WIDTH, HEIGHT, aspectRatio;
@@ -37,13 +38,17 @@
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
-        night: 'true',
+        night: 'day',
+        angle: 0.0,
+        shoot: 'yes',
     }
 
     function addControlGui(){
         let gui=new GUI({autoPlace: false});
         gui.add(guiParameters, 'moon', 0.0, 0.05).step(0.005).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
+        gui.add(guiParameters, 'angle', -0.2, 0.2).name('tiefighter\'s gun angle').listen();
+        gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.top = '0px';
         gui.domElement.style.left = '0px';
@@ -96,7 +101,8 @@
 
         // Objektumok létrehozása
             planetMoon=new THREE.Group();
-            //scene.add(planetMoon);
+            scene.add(planetMoon);
+            planetMoon.position.set(-100, 50, -100);
 
         //planet
             planetRadius=20;
@@ -131,7 +137,7 @@
         //tiefighter
             tiefighter1=new THREE.Group();
             scene.add(tiefighter1);
-            tiefighter1.position.set(0, 0, 0);
+            tiefighter1.position.set(20, 0, 0);
             //wing
             let wingVertices=[];
             wingVertices.push(
@@ -232,8 +238,7 @@
             tflaserL=new THREE.Mesh(gunGeo, laserMat);
             tflaserR.scale.set(0.8, 2, 1);
             tflaserL.scale.set(0.8, 2, 1);
-            tfgunR.add(tflaserR);
-            tfgunL.add(tflaserL);
+
 
             tfgunsystem=new THREE.Object3D();
             tflasers=new THREE.Object3D();
@@ -255,9 +260,6 @@
             let starsMaterial=new THREE.PointsMaterial({size:2, color: 0xffffff, sizeAttenuation: true});
             stars=new THREE.Points(starsGeometry, starsMaterial);
             scene.add(stars);
-
-
-
 
         // Az ablak későbbi átméretezése esetén visszahívható függvény megadása
         window.addEventListener( 'resize', handleWindowResize, false );
@@ -288,26 +290,26 @@
         requestAnimationFrame( animate );
         //hold keringés
         holder1.rotation.y+=guiParameters.moon;
-        //if(guiParameters.night==='day'){
-        //    scene.add(sun);
-        //}else{
-        //    scene.remove(sun);
-        //}
-        angle+=0.0001*direction;
-        if(angle>0.01){
-            direction=-1;
+        if(guiParameters.night==='day'){
+            scene.add(sun);
+        }else{
+            scene.remove(sun);
         }
-        if(angle<-0.01){
-            direction=1;
-        }
-        tfgunsystem.rotation.z+=angle;
 
-        distance+=0.5;
-        if(distance>10){
-            distance=0;
+        tfgunsystem.rotation.z=guiParameters.angle;
+        if(guiParameters.shoot==='yes'){
+            tfgunR.add(tflaserR);
+            tfgunL.add(tflaserL);
+            distance+=0.5;
+            if(distance>10){
+                distance=0;
+            }
+            tflaserR.position.y=distance;
+            tflaserL.position.y=distance;
+        }else{
+            tfgunR.remove(tflaserR);
+            tfgunL.remove(tflaserL);
         }
-        tflaserR.position.y=distance;
-        tflaserL.position.y=distance;
 
         // Kameramozgás vezérlése
         controls.update();
