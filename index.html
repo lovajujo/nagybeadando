@@ -33,7 +33,7 @@
     let controls;
     let planet, stardestroyer, deathstar, tiefighter1, tiefighter2, stars, moon, planetMoon;
     let planetRadius, planetMoonRatio;
-    let holder1;
+    let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers, angle=0, direction=1, distance=0;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
@@ -42,7 +42,7 @@
 
     function addControlGui(){
         let gui=new GUI({autoPlace: false});
-        gui.add(guiParameters, 'moon', 0.0, 0.1).step(0.01).listen();
+        gui.add(guiParameters, 'moon', 0.0, 0.05).step(0.005).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.top = '0px';
@@ -82,7 +82,7 @@
         //scene.add( axesHelper );
 
         //fények
-            let amb=new THREE.AmbientLight(0xffffff, 0.5);
+            let amb=new THREE.AmbientLight(0xffffff, 1);
             scene.add(amb);
 
             sunLight=new THREE.PointLight(0xfffeff, 1);
@@ -96,7 +96,7 @@
 
         // Objektumok létrehozása
             planetMoon=new THREE.Group();
-            scene.add(planetMoon);
+            //scene.add(planetMoon);
 
         //planet
             planetRadius=20;
@@ -131,7 +131,7 @@
         //tiefighter
             tiefighter1=new THREE.Group();
             scene.add(tiefighter1);
-            tiefighter1.position.set(0, 0, -50);
+            tiefighter1.position.set(0, 0, 0);
             //wing
             let wingVertices=[];
             wingVertices.push(
@@ -198,7 +198,7 @@
             let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
             let wingL=new THREE.Mesh(wingGeo, wingMat);
             let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
-            wingR.position.set(0, -5.5, -4);
+            wingR.position.set(0, -5.5, -4.1);
             wingL.position.set(0, -5.5, 4);
             wingR.add(wingRFrame);
             wingL.add(wingLFrame);
@@ -206,15 +206,39 @@
 
             //cabin
             let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
-            let cabin=new THREE.Mesh(cabinGeo, wingMat);
+            let tfMat=new THREE.MeshPhongMaterial({color: 0xa0a0a0});
+            let cabin=new THREE.Mesh(cabinGeo, tfMat);
             tiefighter1.add(cabin);
 
             //axel
             let axelGeo=new THREE.CylinderGeometry(0.7, 0.7, 8, 20, 1);
-            let axel=new THREE.Mesh(axelGeo, wingMat);
+            let axel=new THREE.Mesh(axelGeo, tfMat);
             axel.rotation.z=Math.PI/2;
             axel.rotation.y=Math.PI/2;
             tiefighter1.add(axel);
+
+            //guns
+            let gunGeo=new THREE.CylinderGeometry(0.2, 0.2, 1, 20, 1);
+            tfgunR=new THREE.Mesh(gunGeo, tfMat);
+            tfgunL=new THREE.Mesh(gunGeo, tfMat);
+            tfgunR.position.set(-1.5, -1,-1);
+            tfgunL.position.set(-1.5, -1, 1);
+            tfgunR.rotation.z=Math.PI/2;
+            tfgunL.rotation.z=Math.PI/2;
+
+            //gun lasers
+            let laserMat=new THREE.MeshLambertMaterial({color: 0x00ff00});
+            tflaserR=new THREE.Mesh(gunGeo, laserMat);
+            tflaserL=new THREE.Mesh(gunGeo, laserMat);
+            tflaserR.scale.set(0.8, 2, 1);
+            tflaserL.scale.set(0.8, 2, 1);
+            tfgunR.add(tflaserR);
+            tfgunL.add(tflaserL);
+
+            tfgunsystem=new THREE.Object3D();
+            tflasers=new THREE.Object3D();
+            tfgunsystem.add(tfgunR, tfgunL);
+            cabin.add(tfgunsystem);
 
 
 
@@ -264,12 +288,26 @@
         requestAnimationFrame( animate );
         //hold keringés
         holder1.rotation.y+=guiParameters.moon;
-        if(guiParameters.night==='day'){
-            scene.add(sun);
-        }else{
-            scene.remove(sun);
+        //if(guiParameters.night==='day'){
+        //    scene.add(sun);
+        //}else{
+        //    scene.remove(sun);
+        //}
+        angle+=0.0001*direction;
+        if(angle>0.01){
+            direction=-1;
         }
+        if(angle<-0.01){
+            direction=1;
+        }
+        tfgunsystem.rotation.z+=angle;
 
+        distance+=0.5;
+        if(distance>10){
+            distance=0;
+        }
+        tflaserR.position.y=distance;
+        tflaserL.position.y=distance;
 
         // Kameramozgás vezérlése
         controls.update();
