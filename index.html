@@ -33,21 +33,41 @@
     let controls;
     let planet, stardestroyer, deathstar, tiefighter1, tiefighter2, stars, moon, planetMoon;
     let planetRadius, planetMoonRatio;
-    let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers, angle=0, direction=1, distance=0;
+    let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers, angle, direction=1, distance=0;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
-        night: 'true',
+        night: 'day',
+        angle: 0.0,
+        shoot: 'yes'
     }
 
     function addControlGui(){
         let gui=new GUI({autoPlace: false});
         gui.add(guiParameters, 'moon', 0.0, 0.05).step(0.005).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
+        gui.add(guiParameters, 'angle', -0.3, 0.3).listen();
+        gui.add(guiParameters, 'shoot', ['yes', 'no']).name('shoot?');
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.top = '0px';
         gui.domElement.style.left = '0px';
         document.body.appendChild( gui.domElement );
+    }
+
+    function handleKeyDown(event){
+        if(event.keyCode===32){
+            tfgunR.add(tflaserR);
+            tfgunL.add(tflaserL);
+            distance+=0.5;
+            if(distance>10){
+                distance=0;
+            }
+            tflaserR.position.y=distance;
+            tflaserL.position.y=distance;
+        }else{
+            tfgunR.remove(tflaserR);
+            tfgunL.remove(tflaserL);
+        }
     }
 
     init();
@@ -55,8 +75,8 @@
     // render();
     // Animáció indítása
     animate();
-
     function init() {
+        window.addEventListener("keydown", handleKeyDown);
         addControlGui();
         // Böngésző ablakméret lekérése és méretarány számítása
         HEIGHT = window.innerHeight;
@@ -82,7 +102,7 @@
         //scene.add( axesHelper );
 
         //fények
-            let amb=new THREE.AmbientLight(0xffffff, 1);
+            let amb=new THREE.AmbientLight(0xffffff, 0.3);
             scene.add(amb);
 
             sunLight=new THREE.PointLight(0xfffeff, 1);
@@ -96,7 +116,8 @@
 
         // Objektumok létrehozása
             planetMoon=new THREE.Group();
-            //scene.add(planetMoon);
+            planetMoon.position.set(-80, -20, -100);
+            scene.add(planetMoon);
 
         //planet
             planetRadius=20;
@@ -131,7 +152,7 @@
         //tiefighter
             tiefighter1=new THREE.Group();
             scene.add(tiefighter1);
-            tiefighter1.position.set(0, 0, 0);
+            tiefighter1.position.set(30, 0, 0);
             //wing
             let wingVertices=[];
             wingVertices.push(
@@ -232,11 +253,8 @@
             tflaserL=new THREE.Mesh(gunGeo, laserMat);
             tflaserR.scale.set(0.8, 2, 1);
             tflaserL.scale.set(0.8, 2, 1);
-            tfgunR.add(tflaserR);
-            tfgunL.add(tflaserL);
 
             tfgunsystem=new THREE.Object3D();
-            tflasers=new THREE.Object3D();
             tfgunsystem.add(tfgunR, tfgunL);
             cabin.add(tfgunsystem);
 
@@ -288,26 +306,28 @@
         requestAnimationFrame( animate );
         //hold keringés
         holder1.rotation.y+=guiParameters.moon;
-        //if(guiParameters.night==='day'){
-        //    scene.add(sun);
-        //}else{
-        //    scene.remove(sun);
-        //}
-        angle+=0.0001*direction;
-        if(angle>0.01){
-            direction=-1;
+        if(guiParameters.night==='day'){
+            scene.add(sun);
+        }else{
+            scene.remove(sun);
         }
-        if(angle<-0.01){
-            direction=1;
-        }
-        tfgunsystem.rotation.z+=angle;
 
-        distance+=0.5;
-        if(distance>10){
-            distance=0;
-        }
-        tflaserR.position.y=distance;
-        tflaserL.position.y=distance;
+        tfgunsystem.rotation.z=guiParameters.angle;
+
+        //if(guiParameters.shoot==='yes'){
+        //    tfgunR.add(tflaserR);
+        //    tfgunL.add(tflaserL);
+        //    distance+=0.5;
+        //    if(distance>10){
+        //        distance=0;
+        //    }
+        //    tflaserR.position.y=distance;
+        //    tflaserL.position.y=distance;
+        //}else{
+        //    tfgunR.remove(tflaserR);
+        //    tfgunL.remove(tflaserL);
+        //}
+
 
         // Kameramozgás vezérlése
         controls.update();
