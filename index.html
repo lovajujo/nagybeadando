@@ -25,9 +25,9 @@
     import * as THREE from 'three';
     import { TrackballControls } from 'trackballcontrols';
     import { GUI } from './js-r143/examples/jsm/libs/lil-gui.module.min.js';
-    //import { KeyControl } from './js-r143/examples/jsm/controls/FirstPersonControls.js'
     import { OBJLoader } from './js-r143/examples/jsm/loaders/OBJLoader.js';
     import { MTLLoader } from './js-r143/examples/jsm/loaders/MTLLoader.js';
+    import {FirstPersonControls} from "./js-r143/examples/jsm/controls/FirstPersonControls.js";
 
     // Globális változók
     let WIDTH, HEIGHT, aspectRatio;
@@ -44,6 +44,7 @@
         night: 'day',
         angle: 0.0,
         shoot: 'yes',
+        view: false
     }
     let textureLoader, planetTexture, tiefighterTexture, moonTexture, moonBumpTexture;
 
@@ -56,6 +57,7 @@
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
         gui.add(guiParameters, 'angle', -0.2, 0.2).name('tiefighter\'s gun angle').listen();
         gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
+        gui.add(guiParameters, 'view').name('Drive tie fighter');
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.top = '0px';
         gui.domElement.style.left = '0px';
@@ -115,7 +117,7 @@
         sun=new THREE.Mesh(planetgeo, sunMat);
         sun.scale.set(5, 5, 5);
         sun.position.set(0, 0, 1000);
-        sunLight=new THREE.PointLight(0xfffeff, 1);
+        sunLight=new THREE.PointLight(0xfffeff, 2);
         sunLight.castShadow=true;
         sunLight.distance=2000;
         sunLight.shadow.mapSize.width=2048;
@@ -190,7 +192,7 @@
         wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
         wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
         wingGeo.computeVertexNormals();
-        let wingMat=new THREE.MeshPhongMaterial({color: 0x000000, side:THREE.DoubleSide, metalness: 1, roughness:0});
+        let wingMat=new THREE.MeshPhongMaterial({color: 0x000000, side:THREE.DoubleSide});
         let wingFrameMat=new THREE.MeshLambertMaterial({color: 0x303030, wireframe:true});
         let wingR=new THREE.Mesh(wingGeo, wingMat);
         let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
@@ -204,7 +206,7 @@
 
         //cabin
         let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
-        let tfMat=new THREE.MeshPhongMaterial({color: 0x303030, metalness: 1, roughness:0});
+        let tfMat=new THREE.MeshPhongMaterial({color: 0x303030});
         let cabin=new THREE.Mesh(cabinGeo, tfMat);
         tiefighter1.add(cabin);
 
@@ -230,24 +232,33 @@
         tflaserL=new THREE.Mesh(gunGeo, laserMat);
         tflaserR.scale.set(0.8, 2, 1);
         tflaserL.scale.set(0.8, 2, 1);
+        tflaserL.rotation.set(0, 0, Math.PI);
+        tflaserR.rotation.set(0, 0, Math.PI);
 
         tfgunsystem=new THREE.Object3D();
         tflasers=new THREE.Object3D();
         tfgunsystem.add(tfgunR, tfgunL);
         cabin.add(tfgunsystem);
-
-        //light target
-        //let tempGeo=new THREE.BoxGeometry(1, 10, 10);
-        //let tempMat=new THREE.MeshPhongMaterial({color: 0x000000});
-        //let temp=new THREE.Mesh(tempGeo, tempMat);
-        //temp.position.x=-10;
-        //tfgunsystem.add(temp);
-
+//light target
+        let tempGeo=new THREE.BoxGeometry(1, 5, 5);
+        let tempMat=new THREE.MeshPhongMaterial({color: 0xffffff, visible:false});
+        let tempL=new THREE.Mesh(tempGeo, tempMat);
+        let tempR= new THREE.Mesh(tempGeo, tempMat);
+        tempR.position.set(0, -10, 0);
+        tempL.position.set(0, -10, 0);
+        tempR.rotation.set(0, 0, Math.PI/2);
+        tempL.rotation.set(0, 0, Math.PI/2);
+        tflaserR.add(tempR);
+        tflaserL.add(tempL);
         //laser light
         laserLightR=new THREE.SpotLight(0x00ff00, 1);
         laserLightL=new THREE.SpotLight(0x00ff00, 1);
         laserLightR.angle=Math.PI/20;
         laserLightL.angle=Math.PI/20;
+        laserLightL.target=tempL;
+        laserLightR.target=tempR;
+        laserLightL.distance=40;
+        laserLightR.distance=40;
         tflaserR.add(laserLightR);
         tflaserL.add(laserLightL);
     }
@@ -264,7 +275,7 @@
                 xwing = object;
                 xwing.scale.set(2, 2, 2);
                 xwing.position.set(-30, -10, 0);
-                xwing.rotation.set(Math.PI/2,0,-Math.PI/2);
+                xwing.rotation.set(Math.PI/1.5,0,-Math.PI/2);
                 xwing.castShadow = true;
                 xwing.receiveShadow = true;
                 scene.add( xwing );
@@ -305,7 +316,7 @@
         camera.position.set(0, 0, 70);
         camera.lookAt( scene.position );
 
-        let amb=new THREE.AmbientLight(0xffffff, 1);
+        let amb=new THREE.AmbientLight(0xffffff, 0.2);
         scene.add(amb);
 
         getTextures();
@@ -313,10 +324,19 @@
 
         window.addEventListener( 'resize', handleWindowResize, false );
 
-        controls = new TrackballControls( camera, renderer.domElement );
-        controls.rotateSpeed = 5.0;
-        controls.panSpeed = 1.0;
 
+
+
+
+        //if(!guiParameters.view) {
+           controls = new TrackballControls(camera, renderer.domElement);
+           controls.rotateSpeed = 5.0;
+           controls.panSpeed = 1.0;
+        //}else{
+        //  controls=new FirstPersonControls(camera);
+        //  controls.lookSpeed=0.5;
+        //  controls.movementSpeed=2;
+        //}
     }
 
 
@@ -350,7 +370,7 @@
             tfgunR.add(tflaserR);
             tfgunL.add(tflaserL);
             distance+=0.5;
-            if(distance>10){
+            if(distance>20){
                 distance=0;
             }
             tflaserR.position.y=distance;
