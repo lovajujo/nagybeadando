@@ -24,8 +24,8 @@
 <script type="module">
     import * as THREE from 'three';
     import { TrackballControls } from 'trackballcontrols';
-    import { GUI } from "./js-r143/examples/jsm/libs/lil-gui.module.min.js";
-    //import { KeyControl } from "./js-r143/examples/jsm/controls/FirstPersonControls.js"
+    import { GUI } from './js-r143/examples/jsm/libs/lil-gui.module.min.js';
+    //import { KeyControl } from './js-r143/examples/jsm/controls/FirstPersonControls.js'
     import { OBJLoader } from './js-r143/examples/jsm/loaders/OBJLoader.js';
     import { MTLLoader } from './js-r143/examples/jsm/loaders/MTLLoader.js';
 
@@ -34,8 +34,8 @@
     let renderer;
     let scene, camera;
     let controls;
-    let planet, xwing, deathstar, tiefighter1, tiefighter2, stars, moon, planetMoon;
-    let planetRadius, planetMoonRatio;
+    let planet, xwing, tiefighter1, stars, moon, planetMoon;
+    let planetRadius, planetMoonRatio, planetgeo;
     let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
         angle=0, direction=1, distance=0, laserLightR, laserLightL;
     let sunLight, sun;
@@ -45,10 +45,14 @@
         angle: 0.0,
         shoot: 'yes',
     }
+    let textureLoader, planetTexture, tiefighterTexture, moonTexture, moonBumpTexture;
+
+    init();
+    animate();
 
     function addControlGui(){
         let gui=new GUI({autoPlace: false});
-        gui.add(guiParameters, 'moon', 0.0, 0.05).step(0.005).listen();
+        gui.add(guiParameters, 'moon', -0.05, 0.05).step(0.001).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
         gui.add(guiParameters, 'angle', -0.2, 0.2).name('tiefighter\'s gun angle').listen();
         gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
@@ -58,210 +62,197 @@
         document.body.appendChild( gui.domElement );
     }
 
-    init();
-    // Egy képkocka rajzolása
-    // render();
-    // Animáció indítása
-    animate();
+    function getTextures(){
+        textureLoader=new THREE.TextureLoader();
+        planetTexture=textureLoader.load('textures/planet.png');
+        tiefighterTexture=textureLoader.load('textures/tiefighter.png');
+        moonTexture=textureLoader.load('textures/moon.png')
+    }
+    function getObjects(){
+        getPlanet();
+        getMoon();
+        getSun();
+        getStars();
+        getXWing();
+        getTieFighter();
+    }
 
-    function init() {
-        addControlGui();
-        // Böngésző ablakméret lekérése és méretarány számítása
-        HEIGHT = window.innerHeight;
-        WIDTH = window.innerWidth;
-        aspectRatio = WIDTH / HEIGHT;
-
-        // Renderer létrehozása és DOM-hoz adása
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
-        renderer.shadowMap.enabled=true;
-        renderer.setSize( WIDTH, HEIGHT );
-        renderer.setClearColor( 0x000000 );
-        document.body.appendChild( renderer.domElement );
-
-        // Színtér létrehozása
-        scene = new THREE.Scene();
-
-        // Kamera létrehozása és vetítési paramétereinek beállítása
-        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
-        camera.position.set(0, 0, 70);
-        camera.lookAt( scene.position );
-
-        //let axesHelper = new THREE.AxesHelper( 100 );
-        //scene.add( axesHelper );
-
-        //fények
-            let amb=new THREE.AmbientLight(0xffffff, 1);
-            scene.add(amb);
-            sunLight=new THREE.PointLight(0xfffeff, 1);
-            laserLightR=new THREE.SpotLight(0x00ff00, 1);
-            laserLightL=new THREE.SpotLight(0x00ff00, 1);
-            laserLightR.angle=Math.PI/20;
-            laserLightL.angle=Math.PI/20;
-
-        //textúrák
-            let textureLoader=new THREE.TextureLoader();
-            let planetTexture=textureLoader.load('textures/planet.png');
-            let deathstarTexture=textureLoader.load('textures/deathstar.png');
-            let tiefighterTexture=textureLoader.load('textures/tiefighter.png');
-            let moonTexture=textureLoader.load('textures/moon.png');
-
-        // Objektumok létrehozása
-            planetMoon=new THREE.Group();
-            scene.add(planetMoon);
-            planetMoon.position.set(-100, 50, -100);
-
+    function getPlanet(){
+        planetMoon=new THREE.Group();
+        scene.add(planetMoon);
+        planetMoon.position.set(-70, 50, -50);
         //planet
-            planetRadius=20;
-            let planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
-            let planetMat=new THREE.MeshPhongMaterial();
-            planetMat.map=planetTexture;
-            planet=new THREE.Mesh(planetgeo, planetMat);
-            planetMoon.add(planet);
+        planetRadius=20;
+        planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
+        let planetMat=new THREE.MeshPhongMaterial();
+        planetMat.map=planetTexture;
+        planet=new THREE.Mesh(planetgeo, planetMat);
+        planetMoon.add(planet);
+        planet.castShadow = true;
+        planet.receiveShadow = true;
+    }
 
+    function getMoon(){
         //moon
-            planetMoonRatio=0.1;
-            let moonMat=new THREE.MeshPhongMaterial();
-            moonMat.map=moonTexture;
-            moon=new THREE.Mesh(planetgeo, moonMat);
-            moon.position.set(planetRadius*2,0,0);
-            moon.scale.set(planetMoonRatio, planetMoonRatio, planetMoonRatio);
-            planetMoon.add(moon);
+        planetMoonRatio=0.1;
+        let moonMat=new THREE.MeshPhongMaterial();
+        moonMat.map=moonTexture;
+        moon=new THREE.Mesh(planetgeo, moonMat);
+        moon.position.set(planetRadius*2,0,0);
+        moon.scale.set(planetMoonRatio, planetMoonRatio, planetMoonRatio);
+        moon.castShadow = true;
+        moon.receiveShadow = true;
+        planetMoon.add(moon);
+        holder1=new THREE.Object3D();
+        holder1.add(moon);
+        planetMoon.add(holder1);
+        planetMoon.position.x=-20;
+    }
 
-            holder1=new THREE.Object3D();
-            holder1.add(moon);
-            planetMoon.add(holder1);
-            planetMoon.position.x=-20;
-
+    function getSun(){
         //nap fényforrásnak
-            let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
-            sun=new THREE.Mesh(planetgeo, sunMat);
-            sun.scale.set(5, 5, 5);
-            sun.position.set(0, 0, 1000);
-            sun.add(sunLight);
-            scene.add(sun);
+        let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
+        sun=new THREE.Mesh(planetgeo, sunMat);
+        sun.scale.set(5, 5, 5);
+        sun.position.set(0, 0, 1000);
+        sunLight=new THREE.PointLight(0xfffeff, 1);
+        sunLight.castShadow=true;
+        sunLight.distance=2000;
+        sunLight.shadow.mapSize.width=2048;
+        sunLight.shadow.mapSize.height=2048;
+        sun.add(sunLight);
+    }
 
+    function getTieFighter(){
         //tiefighter
-            tiefighter1=new THREE.Group();
-            scene.add(tiefighter1);
-            tiefighter1.position.set(20, 0, 0);
-            //wing
-            let wingVertices=[];
-            wingVertices.push(
-                -2.5, 0.0, 0.0, //0
-                2.5, 0.0, 0.0,  //1
-                -4.5, 5.5, 0.0, //2
-                4.5, 5.5, 0.0,  //3
-                0.0, 5.5, 0.0,  //4
-                -2.5, 11.0, 0.0, //5
-                2.5, 11.0, 0.0,  //6
+        tiefighter1=new THREE.Group();
+        scene.add(tiefighter1);
+        tiefighter1.position.set(20, -10, 0);
+        tiefighter1.castShadow = true;
+        tiefighter1.receiveShadow = true;
+        //wing
+        let wingVertices=[];
+        wingVertices.push(
+            -2.5, 0.0, 0.0, //0
+            2.5, 0.0, 0.0,  //1
+            -4.5, 5.5, 0.0, //2
+            4.5, 5.5, 0.0,  //3
+            0.0, 5.5, 0.0,  //4
+            -2.5, 11.0, 0.0, //5
+            2.5, 11.0, 0.0,  //6
 
-                 -2.5, 0.0, 0.2, //7
-                  2.5, 0.0, 0.2,  //8
-                 -4.5, 5.5, 0.2, //9
-                  4.5, 5.5, 0.2,  //10
-                  0.0, 5.5, 0.2,  //11
-                -2.5, 11.0, 0.2, //12
-                 2.5, 11.0, 0.2,  //13
+            -2.5, 0.0, 0.2, //7
+            2.5, 0.0, 0.2,  //8
+            -4.5, 5.5, 0.2, //9
+            4.5, 5.5, 0.2,  //10
+            0.0, 5.5, 0.2,  //11
+            -2.5, 11.0, 0.2, //12
+            2.5, 11.0, 0.2,  //13
 
-            )
+        )
 
-            let wingIndices=[];
-            wingIndices.push(
-                0, 1, 4,
-                1, 3, 4,
-                3, 6, 4,
-                6, 5, 4,
-                5, 2, 4,
-                2, 0, 4,
+        let wingIndices=[];
+        wingIndices.push(
+            0, 1, 4,
+            1, 3, 4,
+            3, 6, 4,
+            6, 5, 4,
+            5, 2, 4,
+            2, 0, 4,
 
-                7, 8, 11,
-                8, 10, 11,
-                10, 13, 11,
-                13, 12, 11,
-                12, 9, 11,
-                9, 7, 11,
+            7, 8, 11,
+            8, 10, 11,
+            10, 13, 11,
+            13, 12, 11,
+            12, 9, 11,
+            9, 7, 11,
 
-                5, 6, 13,
-                13, 12, 5,
+            5, 6, 13,
+            13, 12, 5,
 
-                0, 7, 8,
-                8, 1, 0,
+            0, 7, 8,
+            8, 1, 0,
 
-                5, 12, 9,
-                5, 9, 2,
+            5, 12, 9,
+            5, 9, 2,
 
-                6, 10, 13,
-                6, 3, 10,
+            6, 10, 13,
+            6, 3, 10,
 
-                2, 9, 7,
-                2, 7, 0,
+            2, 9, 7,
+            2, 7, 0,
 
-                10, 1, 3,
-                10, 8, 1
-            )
+            10, 1, 3,
+            10, 8, 1
+        )
 
-            let wingGeo=new THREE.BufferGeometry();
-            wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
-            wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
-            wingGeo.computeVertexNormals();
-            let wingMat=new THREE.MeshLambertMaterial({color: 0x101010, side:THREE.DoubleSide});
-            let wingFrameMat=new THREE.MeshLambertMaterial({color: 0xa0a0a0, wireframe:true});
-            let wingR=new THREE.Mesh(wingGeo, wingMat);
-            let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
-            let wingL=new THREE.Mesh(wingGeo, wingMat);
-            let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
-            wingR.position.set(0, -5.5, -4.1);
-            wingL.position.set(0, -5.5, 4);
-            wingR.add(wingRFrame);
-            wingL.add(wingLFrame);
-            tiefighter1.add(wingR, wingL);
+        let wingGeo=new THREE.BufferGeometry();
+        wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
+        wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
+        wingGeo.computeVertexNormals();
+        let wingMat=new THREE.MeshPhongMaterial({color: 0x000000, side:THREE.DoubleSide, metalness: 1, roughness:0});
+        let wingFrameMat=new THREE.MeshLambertMaterial({color: 0x303030, wireframe:true});
+        let wingR=new THREE.Mesh(wingGeo, wingMat);
+        let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+        let wingL=new THREE.Mesh(wingGeo, wingMat);
+        let wingLFrame=new THREE.Mesh(wingGeo, wingFrameMat);
+        wingR.position.set(0, -5.5, -4.1);
+        wingL.position.set(0, -5.5, 4);
+        wingR.add(wingRFrame);
+        wingL.add(wingLFrame);
+        tiefighter1.add(wingR, wingL);
 
-            //cabin
-            let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
-            let tfMat=new THREE.MeshPhongMaterial({color: 0xa0a0a0});
-            let cabin=new THREE.Mesh(cabinGeo, tfMat);
-            tiefighter1.add(cabin);
+        //cabin
+        let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
+        let tfMat=new THREE.MeshPhongMaterial({color: 0x303030, metalness: 1, roughness:0});
+        let cabin=new THREE.Mesh(cabinGeo, tfMat);
+        tiefighter1.add(cabin);
 
-            //axel
-            let axelGeo=new THREE.CylinderGeometry(0.7, 0.7, 8, 20, 1);
-            let axel=new THREE.Mesh(axelGeo, tfMat);
-            axel.rotation.z=Math.PI/2;
-            axel.rotation.y=Math.PI/2;
-            tiefighter1.add(axel);
+        //axel
+        let axelGeo=new THREE.CylinderGeometry(0.7, 0.7, 8, 20, 1);
+        let axel=new THREE.Mesh(axelGeo, tfMat);
+        axel.rotation.z=Math.PI/2;
+        axel.rotation.y=Math.PI/2;
+        tiefighter1.add(axel);
 
-            //guns
-            let gunGeo=new THREE.CylinderGeometry(0.2, 0.2, 1, 20, 1);
-            tfgunR=new THREE.Mesh(gunGeo, tfMat);
-            tfgunL=new THREE.Mesh(gunGeo, tfMat);
-            tfgunR.position.set(-1.5, -1,-1);
-            tfgunL.position.set(-1.5, -1, 1);
-            tfgunR.rotation.z=Math.PI/2;
-            tfgunL.rotation.z=Math.PI/2;
+        //guns
+        let gunGeo=new THREE.CylinderGeometry(0.2, 0.2, 1, 20, 1);
+        tfgunR=new THREE.Mesh(gunGeo, tfMat);
+        tfgunL=new THREE.Mesh(gunGeo, tfMat);
+        tfgunR.position.set(-1.5, -1,-1);
+        tfgunL.position.set(-1.5, -1, 1);
+        tfgunR.rotation.z=Math.PI/2;
+        tfgunL.rotation.z=Math.PI/2;
 
-            //gun lasers
-            let laserMat=new THREE.MeshLambertMaterial({color: 0x00ff00});
-            tflaserR=new THREE.Mesh(gunGeo, laserMat);
-            tflaserL=new THREE.Mesh(gunGeo, laserMat);
-            tflaserR.scale.set(0.8, 2, 1);
-            tflaserL.scale.set(0.8, 2, 1);
+        //gun lasers
+        let laserMat=new THREE.MeshLambertMaterial({color: 0x00ff00});
+        tflaserR=new THREE.Mesh(gunGeo, laserMat);
+        tflaserL=new THREE.Mesh(gunGeo, laserMat);
+        tflaserR.scale.set(0.8, 2, 1);
+        tflaserL.scale.set(0.8, 2, 1);
 
-            tfgunsystem=new THREE.Object3D();
-            tflasers=new THREE.Object3D();
-            tfgunsystem.add(tfgunR, tfgunL);
-            cabin.add(tfgunsystem);
+        tfgunsystem=new THREE.Object3D();
+        tflasers=new THREE.Object3D();
+        tfgunsystem.add(tfgunR, tfgunL);
+        cabin.add(tfgunsystem);
 
-            //light target
-            //let tempGeo=new THREE.BoxGeometry(1, 10, 10);
-            //let tempMat=new THREE.MeshPhongMaterial({color: 0x000000});
-            //let temp=new THREE.Mesh(tempGeo, tempMat);
-            //temp.position.x=-10;
-            //tfgunsystem.add(temp);
+        //light target
+        //let tempGeo=new THREE.BoxGeometry(1, 10, 10);
+        //let tempMat=new THREE.MeshPhongMaterial({color: 0x000000});
+        //let temp=new THREE.Mesh(tempGeo, tempMat);
+        //temp.position.x=-10;
+        //tfgunsystem.add(temp);
 
-            //laser light
-            tflaserR.add(laserLightR);
-            tflaserL.add(laserLightL);
+        //laser light
+        laserLightR=new THREE.SpotLight(0x00ff00, 1);
+        laserLightL=new THREE.SpotLight(0x00ff00, 1);
+        laserLightR.angle=Math.PI/20;
+        laserLightL.angle=Math.PI/20;
+        tflaserR.add(laserLightR);
+        tflaserL.add(laserLightL);
+    }
 
-        //xwing
+    function getXWing(){
         let matFile='blender/xwing.mtl';
         let objFile='blender/xwing.obj';
         let mtlLoader = new MTLLoader();
@@ -272,35 +263,62 @@
             objLoader.load( objFile, function ( object ) {
                 xwing = object;
                 xwing.scale.set(2, 2, 2);
-                xwing.position.set(-10, -30, 20);
-                xwing.rotation.set(Math.PI/2,0,Math.PI/2);
+                xwing.position.set(-30, -10, 0);
+                xwing.rotation.set(Math.PI/2,0,-Math.PI/2);
+                xwing.castShadow = true;
+                xwing.receiveShadow = true;
                 scene.add( xwing );
             } );
         } );
+    }
 
+    function getStars(){
+        let vertices=new Float32Array(10000*3);
+        for(let inc=0, axes=0; inc<10000; inc++, axes+=3){
+            vertices[axes]=Math.random()*5000-2000;
+            vertices[axes+1]=Math.random()*5000-2000;
+            vertices[axes+2]=Math.random()*5000-2000;
+        }
+        let starsGeometry=new THREE.BufferGeometry();
+        starsGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+        let starsMaterial=new THREE.PointsMaterial({size:2, color: 0xffffff, sizeAttenuation: true});
+        stars=new THREE.Points(starsGeometry, starsMaterial);
+        scene.add(stars);
+    }
 
-        //csillagok
-            let vertices=new Float32Array(10000*3);
-            for(let inc=0, axes=0; inc<10000; inc++, axes+=3){
-                vertices[axes]=Math.random()*5000-2000;
-                vertices[axes+1]=Math.random()*5000-2000;
-                vertices[axes+2]=Math.random()*5000-2000;
-            }
-            let starsGeometry=new THREE.BufferGeometry();
-            starsGeometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-            let starsMaterial=new THREE.PointsMaterial({size:2, color: 0xffffff, sizeAttenuation: true});
-            stars=new THREE.Points(starsGeometry, starsMaterial);
-            scene.add(stars);
+    function init() {
+        addControlGui();
 
-        // Az ablak későbbi átméretezése esetén visszahívható függvény megadása
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.shadowMap.enabled=true;
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000 );
+        document.body.appendChild( renderer.domElement );
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.set(0, 0, 70);
+        camera.lookAt( scene.position );
+
+        let amb=new THREE.AmbientLight(0xffffff, 1);
+        scene.add(amb);
+
+        getTextures();
+        getObjects();
+
         window.addEventListener( 'resize', handleWindowResize, false );
 
-        // Kamera vezérlés
         controls = new TrackballControls( camera, renderer.domElement );
         controls.rotateSpeed = 5.0;
         controls.panSpeed = 1.0;
 
     }
+
 
     function handleWindowResize() {
         // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
@@ -349,9 +367,8 @@
     }
 
     function render() {
-        // 3D -> 2D vetített kép kiszámítása.
-        // scene 3D színtér képe a camera kamera szemszögéből.
         renderer.render( scene, camera );
+        renderer.shadowMap.enabled = true;
     }
 
 </script>
