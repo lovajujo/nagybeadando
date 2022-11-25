@@ -46,8 +46,6 @@
         shoot: 'yes',
     }
 
-    obj_mat_loader();
-
     function addControlGui(){
         let gui=new GUI({autoPlace: false});
         gui.add(guiParameters, 'moon', 0.0, 0.05).step(0.005).listen();
@@ -59,26 +57,6 @@
         gui.domElement.style.left = '0px';
         document.body.appendChild( gui.domElement );
     }
-
-    function obj_mat_loader(){
-        let matFile='blender/xwing.mtl';
-        let objFile='blender/xwing.obj';
-        new THREE.MaterialLoader().load(matFile, function (materials){
-            materials.preload();
-            new THREE.ObjectLoader().load(objFile, function(object){
-                xwing=object;
-                console.log(object);
-
-                object.traverse(function (child){
-                    if(child instanceof THREE.Mesh){
-                        child.scale.set(4,4,4);
-                    }
-                });
-                init();
-            });
-        });
-    }
-
 
     init();
     // Egy képkocka rajzolása
@@ -284,7 +262,22 @@
             tflaserL.add(laserLightL);
 
         //xwing
-            scene.add(xwing);
+        let matFile='blender/xwing.mtl';
+        let objFile='blender/xwing.obj';
+        let mtlLoader = new MTLLoader();
+        mtlLoader.load( matFile, function( materials ) {
+            materials.preload();
+            let objLoader = new OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.load( objFile, function ( object ) {
+                xwing = object;
+                xwing.scale.set(2, 2, 2);
+                xwing.position.set(-10, -30, 20);
+                xwing.rotation.set(Math.PI/2,0,Math.PI/2);
+                scene.add( xwing );
+            } );
+        } );
+
 
         //csillagok
             let vertices=new Float32Array(10000*3);
