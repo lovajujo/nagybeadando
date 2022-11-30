@@ -28,26 +28,27 @@
     import { OBJLoader } from './js-r143/examples/jsm/loaders/OBJLoader.js';
     import { MTLLoader } from './js-r143/examples/jsm/loaders/MTLLoader.js';
     import {FirstPersonControls} from "./js-r143/examples/jsm/controls/FirstPersonControls.js";
+    import {FlyControls} from "./js-r143/examples/jsm/controls/FlyControls.js";
 
     // Globális változók
     let WIDTH, HEIGHT, aspectRatio;
     let renderer;
     let scene, camera;
-    let controls;
+    let tbcontrol, flycontrol;
     let planet, xwing, tiefighter1, stars, moon, planetMoon;
     let planetRadius, planetMoonRatio, planetgeo;
     let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
-        angle=0, direction=1, distance=0, laserLightR, laserLightL;
+        angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
         night: 'day',
         angle: 0.0,
-        shoot: 'yes',
+        //shoot: 'yes',
         view: false
     }
-    let textureLoader, planetTexture, tiefighterTexture, moonTexture, moonBumpTexture;
-
+    let textureLoader, planetTexture, tiefighterTexture, moonTexture;
+    const clock=new THREE.Clock();
     init();
     animate();
 
@@ -56,7 +57,7 @@
         gui.add(guiParameters, 'moon', -0.05, 0.05).step(0.001).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
         gui.add(guiParameters, 'angle', -0.2, 0.2).name('tiefighter\'s gun angle').listen();
-        gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
+        //gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
         gui.add(guiParameters, 'view').name('Drive tie fighter');
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.top = '0px';
@@ -297,8 +298,16 @@
         scene.add(stars);
     }
 
+    function handleKeyPress(event){
+        if(event.which || event.keyCode==='x'){
+            shoot=!shoot;
+        }
+    }
+
     function init() {
         addControlGui();
+        window.addEventListener('keypress', handleKeyPress);
+
 
         HEIGHT = window.innerHeight;
         WIDTH = window.innerWidth;
@@ -329,13 +338,14 @@
 
 
         //if(!guiParameters.view) {
-           controls = new TrackballControls(camera, renderer.domElement);
-           controls.rotateSpeed = 5.0;
-           controls.panSpeed = 1.0;
+        //   tbcontrol = new TrackballControls(camera, renderer.domElement);
+        //   tbcontrol.rotateSpeed = 5.0;
+        //   tbcontrol.panSpeed = 1.0;
         //}else{
-        //  controls=new FirstPersonControls(camera);
-        //  controls.lookSpeed=0.5;
-        //  controls.movementSpeed=2;
+            flycontrol = new FlyControls( camera, renderer.domElement );
+            flycontrol.movementSpeed = 50;
+            flycontrol.rollSpeed = Math.PI / 12;
+
         //}
     }
 
@@ -357,6 +367,7 @@
         // Újabb képkocka rajzolásának kérése.
         // Maximálisan 60 FPS-t biztosít a rendszer.
         requestAnimationFrame( animate );
+        let delta=clock.getDelta();
         //hold keringés
         holder1.rotation.y+=guiParameters.moon;
         if(guiParameters.night==='day'){
@@ -366,7 +377,8 @@
         }
 
         tfgunsystem.rotation.z=guiParameters.angle;
-        if(guiParameters.shoot==='yes'){
+        //hit x to shoot, hit again to stop
+        if(shoot){
             tfgunR.add(tflaserR);
             tfgunL.add(tflaserL);
             distance+=0.5;
@@ -380,8 +392,12 @@
             tfgunL.remove(tflaserL);
         }
 
-        // Kameramozgás vezérlése
-        controls.update();
+
+        tiefighter1.position.copy(camera.position);
+        tiefighter1.rotation.copy(camera.rotation);
+        tiefighter1.rotateY(-Math.PI/2);
+        tiefighter1.updateMatrix();
+        flycontrol.update(delta);
         // Új képkocka rajzolása
         render();
     }
