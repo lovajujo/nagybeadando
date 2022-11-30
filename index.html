@@ -7,10 +7,39 @@
     <style>
         body { margin: 0; overflow: hidden; }
         canvas { width: 100%; height: 100% }
+        .info{
+            top: 10px;
+            color: white;
+            display:block;
+            z-index: 100;
+        }
+        #infopanel {
+            left: 10px;
+            text-align: left;
+            position: absolute;
+        }
+        #keys{
+            right: 10px;
+            text-align: right;
+            position: absolute;
+        }
     </style>
 </head>
 
 <body>
+<div class="info">
+    <p id="infopanel">
+        Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.
+    </p>
+</div>
+<div class="info">
+    <p id="keys">
+        fly controls:<br>
+        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>
+        start and stop shooting: <em>x</em><br>
+        show info: <em>i</em>
+    </p>
+</div>
 
 <script type="importmap">
 {
@@ -48,6 +77,7 @@
         view: false
     }
     let textureLoader, planetTexture, tiefighterTexture, moonTexture;
+    let showInfo=true, infopanel, keypanel;
     const clock=new THREE.Clock();
     init();
     animate();
@@ -60,10 +90,11 @@
         //gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
         gui.add(guiParameters, 'view').name('Drive tie fighter');
         gui.domElement.style.position = 'absolute';
-        gui.domElement.style.top = '0px';
-        gui.domElement.style.left = '0px';
+        gui.domElement.style.bottom = '10px';
+        gui.domElement.style.left = '10px';
         document.body.appendChild( gui.domElement );
     }
+
 
     function getTextures(){
         textureLoader=new THREE.TextureLoader();
@@ -299,12 +330,26 @@
     }
 
     function handleKeyPress(event){
-        if(event.which || event.keyCode==='x'){
-            shoot=!shoot;
+        switch (event.keyCode){
+            case 120:
+                shoot=!shoot;
+                break;
+            case 105:
+                showInfo=!showInfo;
+                break;
         }
+
+    }
+
+    function setInfoPanelText( name, keys  ) {
+        infopanel.innerHTML = name;
+        keypanel.innerHTML=keys;
     }
 
     function init() {
+        infopanel=document.getElementById("infopanel");
+        keypanel=document.getElementById("keys");
+
         addControlGui();
         window.addEventListener('keypress', handleKeyPress);
 
@@ -367,6 +412,14 @@
         // Újabb képkocka rajzolásának kérése.
         // Maximálisan 60 FPS-t biztosít a rendszer.
         requestAnimationFrame( animate );
+        if(showInfo){
+            setInfoPanelText("Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.", "fly controls:<br>\n" +
+                "        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>\n" +
+                "        start and stop shooting: <em>x</em><br>\n" +
+                "        show info: <em>i</em>")
+        }else{
+            setInfoPanelText("", "");
+        }
         let delta=clock.getDelta();
         //hold keringés
         holder1.rotation.y+=guiParameters.moon;
@@ -396,6 +449,7 @@
         tiefighter1.position.copy(camera.position);
         tiefighter1.rotation.copy(camera.rotation);
         tiefighter1.rotateY(-Math.PI/2);
+        tiefighter1.translateX(1);
         tiefighter1.updateMatrix();
         flycontrol.update(delta);
         // Új képkocka rajzolása
