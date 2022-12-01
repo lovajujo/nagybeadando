@@ -53,14 +53,16 @@
     import { OBJLoader } from './js-r143/examples/jsm/loaders/OBJLoader.js';
     import { MTLLoader } from './js-r143/examples/jsm/loaders/MTLLoader.js';
     import {FlyControls} from "./js-r143/examples/jsm/controls/FlyControls.js";
+    import {TWEEN} from "./js-r143/examples/jsm/libs/tween.module.min.js";
 
     let WIDTH, HEIGHT, aspectRatio;
     let renderer;
     let scene, camera, tbcontrol, flycontrol;
-    let planet, xwing, tiefighter1, stars, moon;
+    let planet, xwing, tiefighter1, stars, moon, xwing2;
     let planetRadius, planetMoonRatio, planetgeo, planetMoon;
     let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
-        angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false, fly=false;
+        angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false, fly=false,
+        turnaround=false, speed=1, appeared1=false, appeared2=false;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
@@ -217,7 +219,7 @@
         wingGeo.setIndex(new THREE.Uint16BufferAttribute(wingIndices, 1));
         wingGeo.setAttribute('position', new THREE.Float32BufferAttribute(wingVertices, 3));
         wingGeo.computeVertexNormals();
-        let wingMat=new THREE.MeshPhongMaterial({color: 0x000000, side:THREE.DoubleSide});
+        let wingMat=new THREE.MeshPhongMaterial({color: 0x000000, side:THREE.DoubleSide, specular: 0});
         let wingFrameMat=new THREE.MeshLambertMaterial({color: 0x303030, wireframe:true});
         let wingR=new THREE.Mesh(wingGeo, wingMat);
         let wingRFrame=new THREE.Mesh(wingGeo, wingFrameMat);
@@ -286,7 +288,7 @@
 
     function setTieFighterPositionToOriginal(){
         camera.position.set(0, 0, 70);
-        tiefighter1.position.set(20, -10, 0);
+        tiefighter1.position.set(-50, -10, 0);
         tiefighter1.rotation.set(0,0,0);
     }
 
@@ -309,13 +311,29 @@
             objLoader.load( objFile, function ( object ) {
                 xwing = object;
                 xwing.scale.set(2, 2, 2);
-                xwing.position.set(-30, -10, 0);
-                xwing.rotation.set(Math.PI/1.5,0,-Math.PI/2);
+                xwing.position.set(100, -10, 20);
+                xwing.rotation.set(Math.PI/1.7,0,-Math.PI/2.2);
                 xwing.castShadow = true;
                 xwing.receiveShadow = true;
-                scene.add( xwing );
+                //scene.add( xwing );
             } );
         } );
+
+        mtlLoader.load( matFile, function( materials ) {
+            materials.preload();
+            let objLoader = new OBJLoader();
+            objLoader.setMaterials( materials );
+            objLoader.load( objFile, function ( object ) {
+                xwing2 = object;
+                xwing2.scale.set(2, 2, 2);
+                xwing2.position.set(80, 0, -20);
+                xwing2.rotation.set(-Math.PI/1.7+Math.PI,0,-Math.PI/1.8);
+                xwing2.castShadow = true;
+                xwing2.receiveShadow = true;
+                //scene.add( xwing2 );
+            } );
+        } );
+
     }
 
     function getStars(){
@@ -359,18 +377,17 @@
         keypanel.innerHTML=keys;
     }
 
-    function getTBControls(){
+    function getFlyControl(){
         flycontrol = new FlyControls( camera, renderer.domElement );
         flycontrol.movementSpeed = 50;
-        flycontrol.rollSpeed = Math.PI / 12;
+        flycontrol.rollSpeed = Math.PI / 5;
     }
 
-    function getFlyControl(){
+    function getTBControls(){
         tbcontrol = new TrackballControls(camera, renderer.domElement);
         tbcontrol.rotateSpeed = 5.0;
         tbcontrol.panSpeed = 1.0;
     }
-
 
     function handleWindowResize() {
         // Az ablak átméretezése esetén a kamera vetítési paraméterek újraszámolása
@@ -384,7 +401,6 @@
 
         render();
     }
-
 
     function init() {
         infopanel=document.getElementById("infopanel");
@@ -414,11 +430,27 @@
         getTBControls();
         getFlyControl();
 
-        let amb=new THREE.AmbientLight(0xffffff, 0.2);
+        let amb=new THREE.AmbientLight(0xffffff, 0.5);
         scene.add(amb);
 
         getTextures();
         getObjects();
+
+        let add1 = function() {
+            scene.add(xwing);
+            appeared1=true;
+        }
+        let add2=function(){
+            scene.add(xwing2);
+            appeared2=true;
+        }
+
+        let turn=function(){
+            turnaround=true;
+        }
+        setTimeout(add1, 4000);
+        setTimeout(add2, 3000);
+        setTimeout(turn, 4500);
 
     }
 
@@ -468,15 +500,38 @@
         holder1.rotation.y+=guiParameters.moon;
     }
 
+    function turnToShoot(){
+        if(turnaround){
+            if(tiefighter1.rotation.y<Math.PI){
+                tiefighter1.rotation.y+=0.1;
+            }else{
+                shoot=true;
+                turnaround=false;
+            }
+        }
+    }
+
+    function xwingsFly(obj){
+        if(obj.position.x>20){
+            obj.position.x-=speed;
+            speed*=0.99;
+        }
+
+    }
+
     function animate() {
         requestAnimationFrame( animate );
         delta=clock.getDelta();
+        if(appeared1) xwingsFly(xwing);
+        if(appeared2) xwingsFly(xwing2);
+        turnToShoot();
         showInfoPanel();
         switchDayNight();
         moonOrbit();
         switchControl();
         shooting();
         render();
+
     }
 
     function render() {
