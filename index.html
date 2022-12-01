@@ -23,6 +23,9 @@
             text-align: right;
             position: absolute;
         }
+        b{
+            color: aquamarine;
+        }
     </style>
 </head>
 
@@ -67,10 +70,11 @@
     let textureLoader, planetTexture, tiefighterTexture, moonTexture;
     let showInfo=true, infopanel, keypanel;
     const nameinfo="Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.";
-    const keyinfo="fly controls:<br>\n" +
-        "        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>\n" +
-        "        start and stop shooting: <em>x</em><br>\n" +
-        "        show info: <em>i</em>";
+    const keyinfo="trackball control: <b>1</b><br>fly with tie fighter: <b>2</b>:<br>" +
+        "        move: <b>wasd</b><br>up/down: <b>r/f</b><br>roll: <b>q/e</b><br>turn: <b>arrows</b><br>" +
+        "look around: <b>move mouse</b><br>move forward/backward: <br><b>left click/right click</b><br>" +
+        "        start/stop shooting: <b>x</b><br>" +
+        "        show/hide info: <b>i</b><br>";
     const clock=new THREE.Clock();
     let delta;
 
