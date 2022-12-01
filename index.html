@@ -67,7 +67,7 @@
     let planet, xwing, tiefighter1, stars, moon, planetMoon;
     let planetRadius, planetMoonRatio, planetgeo;
     let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
-        angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false;
+        angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false, fly=false;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
@@ -161,7 +161,7 @@
         //tiefighter
         tiefighter1=new THREE.Group();
         scene.add(tiefighter1);
-        tiefighter1.position.set(20, -10, 0);
+        setTieFighterPositionToOriginal();
         tiefighter1.castShadow = true;
         tiefighter1.receiveShadow = true;
         //wing
@@ -295,6 +295,20 @@
         tflaserL.add(laserLightL);
     }
 
+    function setTieFighterPositionToOriginal(){
+        camera.position.set(0, 0, 70);
+        tiefighter1.position.set(20, -10, 0);
+        tiefighter1.rotation.set(0,0,0);
+    }
+
+    function setTieFighterPositionToFly(){
+        tiefighter1.position.copy(camera.position);
+        tiefighter1.rotation.copy(camera.rotation);
+        tiefighter1.rotateY(-Math.PI/2);
+        tiefighter1.translateX(1);
+        tiefighter1.updateMatrix();
+    }
+
     function getXWing(){
         let matFile='blender/xwing.mtl';
         let objFile='blender/xwing.obj';
@@ -337,8 +351,17 @@
             case 105:
                 showInfo=!showInfo;
                 break;
+            case 49:
+                fly=false;
+                flycontrol.dispose();
+                getTBControls();
+                break;
+            case 50:
+                fly=true;
+                tbcontrol.dispose();
+                getFlyControl();
+                break;
         }
-
     }
 
     function setInfoPanelText( name, keys  ) {
@@ -352,7 +375,6 @@
 
         addControlGui();
         window.addEventListener('keypress', handleKeyPress);
-
 
         HEIGHT = window.innerHeight;
         WIDTH = window.innerWidth;
@@ -370,6 +392,9 @@
         camera.position.set(0, 0, 70);
         camera.lookAt( scene.position );
 
+        getTBControls();
+        getFlyControl();
+
         let amb=new THREE.AmbientLight(0xffffff, 0.2);
         scene.add(amb);
 
@@ -377,21 +402,18 @@
         getObjects();
 
         window.addEventListener( 'resize', handleWindowResize, false );
+    }
 
+    function getTBControls(){
+        flycontrol = new FlyControls( camera, renderer.domElement );
+        flycontrol.movementSpeed = 50;
+        flycontrol.rollSpeed = Math.PI / 12;
+    }
 
-
-
-
-        //if(!guiParameters.view) {
-        //   tbcontrol = new TrackballControls(camera, renderer.domElement);
-        //   tbcontrol.rotateSpeed = 5.0;
-        //   tbcontrol.panSpeed = 1.0;
-        //}else{
-            flycontrol = new FlyControls( camera, renderer.domElement );
-            flycontrol.movementSpeed = 50;
-            flycontrol.rollSpeed = Math.PI / 12;
-
-        //}
+    function getFlyControl(){
+        tbcontrol = new TrackballControls(camera, renderer.domElement);
+        tbcontrol.rotateSpeed = 5.0;
+        tbcontrol.panSpeed = 1.0;
     }
 
 
@@ -445,13 +467,14 @@
             tfgunL.remove(tflaserL);
         }
 
+        if(fly){
+            setTieFighterPositionToFly();
+            flycontrol.update(delta);
+        }else{
+            setTieFighterPositionToOriginal();
+            tbcontrol.update(delta);
+        }
 
-        tiefighter1.position.copy(camera.position);
-        tiefighter1.rotation.copy(camera.rotation);
-        tiefighter1.rotateY(-Math.PI/2);
-        tiefighter1.translateX(1);
-        tiefighter1.updateMatrix();
-        flycontrol.update(delta);
         // Új képkocka rajzolása
         render();
     }
