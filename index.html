@@ -28,17 +28,10 @@
 
 <body>
 <div class="info">
-    <p id="infopanel">
-        Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.
-    </p>
+    <p id="infopanel"></p>
 </div>
 <div class="info">
-    <p id="keys">
-        fly controls:<br>
-        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>
-        start and stop shooting: <em>x</em><br>
-        show info: <em>i</em>
-    </p>
+    <p id="keys"></p>
 </div>
 
 <script type="importmap">
@@ -56,29 +49,31 @@
     import { GUI } from './js-r143/examples/jsm/libs/lil-gui.module.min.js';
     import { OBJLoader } from './js-r143/examples/jsm/loaders/OBJLoader.js';
     import { MTLLoader } from './js-r143/examples/jsm/loaders/MTLLoader.js';
-    import {FirstPersonControls} from "./js-r143/examples/jsm/controls/FirstPersonControls.js";
     import {FlyControls} from "./js-r143/examples/jsm/controls/FlyControls.js";
 
-    // Globális változók
     let WIDTH, HEIGHT, aspectRatio;
     let renderer;
-    let scene, camera;
-    let tbcontrol, flycontrol;
-    let planet, xwing, tiefighter1, stars, moon, planetMoon;
-    let planetRadius, planetMoonRatio, planetgeo;
+    let scene, camera, tbcontrol, flycontrol;
+    let planet, xwing, tiefighter1, stars, moon;
+    let planetRadius, planetMoonRatio, planetgeo, planetMoon;
     let holder1, tfgunR, tfgunL, tflaserR, tflaserL, tfgunsystem, tflasers,
         angle=0, direction=1, distance=0, laserLightR, laserLightL, shoot=false, fly=false;
     let sunLight, sun;
     let guiParameters={
         moon: 0.005,
         night: 'day',
-        angle: 0.0,
-        //shoot: 'yes',
-        view: false
+        angle: 0.0
     }
     let textureLoader, planetTexture, tiefighterTexture, moonTexture;
     let showInfo=true, infopanel, keypanel;
+    const nameinfo="Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.";
+    const keyinfo="fly controls:<br>\n" +
+        "        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>\n" +
+        "        start and stop shooting: <em>x</em><br>\n" +
+        "        show info: <em>i</em>";
     const clock=new THREE.Clock();
+    let delta;
+
     init();
     animate();
 
@@ -87,8 +82,6 @@
         gui.add(guiParameters, 'moon', -0.05, 0.05).step(0.001).listen();
         gui.add(guiParameters, 'night', ['day', 'night']).name('night?');
         gui.add(guiParameters, 'angle', -0.2, 0.2).name('tiefighter\'s gun angle').listen();
-        //gui.add(guiParameters, 'shoot', ['yes', 'no']).listen();
-        gui.add(guiParameters, 'view').name('Drive tie fighter');
         gui.domElement.style.position = 'absolute';
         gui.domElement.style.bottom = '10px';
         gui.domElement.style.left = '10px';
@@ -115,7 +108,6 @@
         planetMoon=new THREE.Group();
         scene.add(planetMoon);
         planetMoon.position.set(-70, 50, -50);
-        //planet
         planetRadius=20;
         planetgeo=new THREE.SphereGeometry(planetRadius, 80, 80);
         let planetMat=new THREE.MeshPhongMaterial();
@@ -127,7 +119,6 @@
     }
 
     function getMoon(){
-        //moon
         planetMoonRatio=0.1;
         let moonMat=new THREE.MeshPhongMaterial();
         moonMat.map=moonTexture;
@@ -144,7 +135,6 @@
     }
 
     function getSun(){
-        //nap fényforrásnak
         let sunMat=new THREE.MeshBasicMaterial({color: 0xffc900});
         sun=new THREE.Mesh(planetgeo, sunMat);
         sun.scale.set(5, 5, 5);
@@ -158,7 +148,6 @@
     }
 
     function getTieFighter(){
-        //tiefighter
         tiefighter1=new THREE.Group();
         scene.add(tiefighter1);
         setTieFighterPositionToOriginal();
@@ -236,20 +225,17 @@
         wingL.add(wingLFrame);
         tiefighter1.add(wingR, wingL);
 
-        //cabin
         let cabinGeo=new THREE.SphereGeometry(2, 20, 20);
         let tfMat=new THREE.MeshPhongMaterial({color: 0x303030});
         let cabin=new THREE.Mesh(cabinGeo, tfMat);
         tiefighter1.add(cabin);
 
-        //axel
         let axelGeo=new THREE.CylinderGeometry(0.7, 0.7, 8, 20, 1);
         let axel=new THREE.Mesh(axelGeo, tfMat);
         axel.rotation.z=Math.PI/2;
         axel.rotation.y=Math.PI/2;
         tiefighter1.add(axel);
 
-        //guns
         let gunGeo=new THREE.CylinderGeometry(0.2, 0.2, 1, 20, 1);
         tfgunR=new THREE.Mesh(gunGeo, tfMat);
         tfgunL=new THREE.Mesh(gunGeo, tfMat);
@@ -258,7 +244,6 @@
         tfgunR.rotation.z=Math.PI/2;
         tfgunL.rotation.z=Math.PI/2;
 
-        //gun lasers
         let laserMat=new THREE.MeshLambertMaterial({color: 0x00ff00});
         tflaserR=new THREE.Mesh(gunGeo, laserMat);
         tflaserL=new THREE.Mesh(gunGeo, laserMat);
@@ -271,7 +256,7 @@
         tflasers=new THREE.Object3D();
         tfgunsystem.add(tfgunR, tfgunL);
         cabin.add(tfgunsystem);
-//light target
+
         let tempGeo=new THREE.BoxGeometry(1, 5, 5);
         let tempMat=new THREE.MeshPhongMaterial({color: 0xffffff, visible:false});
         let tempL=new THREE.Mesh(tempGeo, tempMat);
@@ -282,7 +267,7 @@
         tempL.rotation.set(0, 0, Math.PI/2);
         tflaserR.add(tempR);
         tflaserL.add(tempL);
-        //laser light
+
         laserLightR=new THREE.SpotLight(0x00ff00, 1);
         laserLightL=new THREE.SpotLight(0x00ff00, 1);
         laserLightR.angle=Math.PI/20;
@@ -353,6 +338,7 @@
                 break;
             case 49:
                 fly=false;
+                setTieFighterPositionToOriginal();
                 flycontrol.dispose();
                 getTBControls();
                 break;
@@ -367,41 +353,6 @@
     function setInfoPanelText( name, keys  ) {
         infopanel.innerHTML = name;
         keypanel.innerHTML=keys;
-    }
-
-    function init() {
-        infopanel=document.getElementById("infopanel");
-        keypanel=document.getElementById("keys");
-
-        addControlGui();
-        window.addEventListener('keypress', handleKeyPress);
-
-        HEIGHT = window.innerHeight;
-        WIDTH = window.innerWidth;
-        aspectRatio = WIDTH / HEIGHT;
-
-        renderer = new THREE.WebGLRenderer( { antialias: true } );
-        renderer.shadowMap.enabled=true;
-        renderer.setSize( WIDTH, HEIGHT );
-        renderer.setClearColor( 0x000000 );
-        document.body.appendChild( renderer.domElement );
-
-        scene = new THREE.Scene();
-
-        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
-        camera.position.set(0, 0, 70);
-        camera.lookAt( scene.position );
-
-        getTBControls();
-        getFlyControl();
-
-        let amb=new THREE.AmbientLight(0xffffff, 0.2);
-        scene.add(amb);
-
-        getTextures();
-        getObjects();
-
-        window.addEventListener( 'resize', handleWindowResize, false );
     }
 
     function getTBControls(){
@@ -430,29 +381,69 @@
         render();
     }
 
-    function animate() {
-        // Újabb képkocka rajzolásának kérése.
-        // Maximálisan 60 FPS-t biztosít a rendszer.
-        requestAnimationFrame( animate );
+
+    function init() {
+        infopanel=document.getElementById("infopanel");
+        keypanel=document.getElementById("keys");
+
+        addControlGui();
+
+        window.addEventListener('keypress', handleKeyPress);
+        window.addEventListener( 'resize', handleWindowResize, false );
+
+        HEIGHT = window.innerHeight;
+        WIDTH = window.innerWidth;
+        aspectRatio = WIDTH / HEIGHT;
+
+        renderer = new THREE.WebGLRenderer( { antialias: true } );
+        renderer.shadowMap.enabled=true;
+        renderer.setSize( WIDTH, HEIGHT );
+        renderer.setClearColor( 0x000000 );
+        document.body.appendChild( renderer.domElement );
+
+        scene = new THREE.Scene();
+
+        camera = new THREE.PerspectiveCamera( 75, aspectRatio, 0.1, 1000 );
+        camera.position.set(0, 0, 70);
+        camera.lookAt( scene.position );
+
+        getTBControls();
+        getFlyControl();
+
+        let amb=new THREE.AmbientLight(0xffffff, 0.2);
+        scene.add(amb);
+
+        getTextures();
+        getObjects();
+
+    }
+
+    function showInfoPanel(){
         if(showInfo){
-            setInfoPanelText("Lovászi Zsuzsanna<br>VH57FE<br>mérnökinformatikus<br>2022/23/1.", "fly controls:<br>\n" +
-                "        move: <em>wasd</em> | up/down: <em>r/f</em> | roll: <em>q/e</em> | turn: <em>arrows</em><br>\n" +
-                "        start and stop shooting: <em>x</em><br>\n" +
-                "        show info: <em>i</em>")
+            setInfoPanelText(nameinfo, keyinfo);
         }else{
             setInfoPanelText("", "");
         }
-        let delta=clock.getDelta();
-        //hold keringés
-        holder1.rotation.y+=guiParameters.moon;
+    }
+
+    function switchDayNight(){
         if(guiParameters.night==='day'){
             scene.add(sun);
         }else{
             scene.remove(sun);
         }
+    }
 
-        tfgunsystem.rotation.z=guiParameters.angle;
-        //hit x to shoot, hit again to stop
+    function switchControl(){
+        if(fly){
+            setTieFighterPositionToFly();
+            flycontrol.update(delta);
+        }else{
+            tbcontrol.update();
+        }
+    }
+
+    function shooting(){
         if(shoot){
             tfgunR.add(tflaserR);
             tfgunL.add(tflaserL);
@@ -466,16 +457,21 @@
             tfgunR.remove(tflaserR);
             tfgunL.remove(tflaserL);
         }
+        tfgunsystem.rotation.z=guiParameters.angle;
+    }
 
-        if(fly){
-            setTieFighterPositionToFly();
-            flycontrol.update(delta);
-        }else{
-            setTieFighterPositionToOriginal();
-            tbcontrol.update(delta);
-        }
+    function moonOrbit(){
+        holder1.rotation.y+=guiParameters.moon;
+    }
 
-        // Új képkocka rajzolása
+    function animate() {
+        requestAnimationFrame( animate );
+        delta=clock.getDelta();
+        showInfoPanel();
+        switchDayNight();
+        moonOrbit();
+        switchControl();
+        shooting();
         render();
     }
 
