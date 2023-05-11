@@ -1,0 +1,21 @@
+x-wing
+
+-háttérnek 3 irányban betöltöttem a tervrajzokat, hogy az arányokat lássam
+-kockából indultam ki, tükröztem az x tengelyre hogy szimmetrikus legyen (meg fele annyit kelljen szerkeszteni)
+-hozzáadtam pár új élt (ctrl+r)
+-minden irányból megfelelő alakúra mozgattam (g+y, g+x)
+-a szárnyakat extrude-dal (e) kihúztam az alap objectből, új élek hozzáadásával és extrude-dal, és sarkok mozgatásával kiakalítottam az alakját
+-hajtóművek: +2 cylinder (ami 4 a tükrözés miatt), mozgatás (g), skálázás (s), inset-tekkel (i) belső átmérő, extrude-dokkal (e) kialakítottam a megfelelő átmérőket
+-guns: ugyanúgy mint a hajtómű, csak más arányú skálázások
+-test: fölösleges éleket eltüntettem (kijelölés, jobb klikk, dissolve edges), extrude-okkal, mozgatásokkal, skálázásokkal kialakítottam az alakját
+-hátulja: inset-tel és befelé irányuló extrude-dal perem létrehozása
+-eleje: extrude-ok, élek mozgatása, skálázása
+-fülke: inset, extrude, középső élek szimmetria tengelyhez mozgatása, hogy ne legyen az ablak közepén egy plusz keret
+-szín: material properties-nél 4 új materialt létrehoztam, megadtam base colort, metallic és specular értékeket változtattam
+-kijelöltem a megfelelő felületet és hozzáadtam a hozzá tartozó anyagot
+
+
+alsó 3 törölni kellett az obj fájl-ban, mert vonalakkal nem tud mit kezdeni a three.js: 
+l 2099 2012
+l 2140 2141
+l 24 25
